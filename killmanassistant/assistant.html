@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="format-detection"content="telephone=no" />
+    <title>Who are the killers</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css" />
+    <script src="js/angularjs/angular.min.js"></script>
+    <style>
+        body{
+            width:100%;
+            height:100%;
+        }
+        .alive{
+            color:green;
+        }
+        .gamebtn{
+            width:3em;
+            height:3em;
+            line-height:3em;
+            border:1px solid #696969;
+            border-radius: 50%;
+            text-align: center;
+            font-weight:bold;
+            float:right;
+        }
+        .killbtn{
+            background:red;
+            color:white;
+        }
+        .rescuebtn{
+            background:green;
+            color:white;
+        }
+        .rescuebtn.rescue1{
+            background:orange;
+            color:white;
+        }
+        .rescuebtn.rescue2{
+            background:grey;
+            color:white;
+        }
+        .player{
+            line-height:3em;
+        }
+        .delbtn{
+            float:left;
+        }
+        .result{
+            width: 100%;
+            height: auto;
+            z-index: 10000;
+            color: white;
+            background: #000;
+            padding:0.5em;
+            box-sizing:border-box;
+        }
+        .resultshow{
+            font-size:120%;
+            font-weight:bold;
+            margin:1em 0;
+        }
+        .pshow{
+            float:left;
+            width:100%;
+        }
+        .playername{
+            font-size:100%;
+            font-weight:normal;
+            color:#333;
+        }
+        .playername.killer{
+            font-size:110%;
+            font-weight:bold;
+            color:#f00;
+        }
+        .playerroletext.killer{
+            font-size:110%;
+            font-weight:bold;
+            color:#f00;
+        }
+
+        .player.killed{
+            background:#999999;
+        }
+        .playerstatus{
+           float:left;
+            width:1em;
+            height:1em;
+            border:#fff 1px solid;
+            border-radius: 50%;
+            background:green;
+        }
+        .playerstatus.killed{
+            background:gray;
+        }
+        .gameinfo{
+            position:fixed;
+            top:0;
+            left:0;
+            z-index: 200;
+            width:100%;
+        }
+        .content{
+            padding-top:40%;
+
+        }
+
+    </style>
+</head>
+<body ng-app="killer">
+    <div class="container" ng-controller="killergame">
+        <div class="col-md-12 alert-info gameinfo">
+            <div class="resultshow col-md-12">
+                <span>当前游戏总人数：{{players.length}}</span>，
+                <span>存活总人数：{{alivecount}}<br/></span>
+                <span>警察阵营存活数：{{goodmancount}}</span>，
+                <span>杀手阵营存活数：{{badmancount}}<br/></span>
+                <span>平民存活数：{{peplecount}}<br/></span>
+                <div ng-if="game.isover" class="result">
+                    <h4>游戏结束，{{winner}}获胜！！</h4>
+                    <button class="btn btn-danger" ng-click="newgame()">重新开始</button>
+                </div>
+            </div>
+
+        </div>
+        <div class="row col-md-12 content">
+            <div class="col-md-12">
+                <h3>天黑请闭眼</h3>
+            </div>
+            <div class="col-md-12">
+                <ul class="list-group">
+                    <li class="player list-group-item" ng-class="{killed:player.isdead}" ng-repeat="player in players">
+                        <span class="pshow" ng-class="{alive:!player.isdead}">
+                            <a ng-click="player.role='未知'" class="playerroletext" ng-class="{killer:player.role=='杀手'}">【 {{player.role}} 】</a>
+                            <span class="playername" ng-class="{police:player.role=='警察',killer:player.role=='杀手',specialpolice:player.role=='秘密警察',doctor:player.role=='医生',people:player.role=='平民'}">玩家{{player.number+1}}</span>
+                            <button ng-if="player.role=='秘密警察'&&game.policechance==1" class="btn btn-default btn-sm" ng-click="(game.policechance=0)">特权</button>
+                            <div class="playerstatus" ng-class="{killed:player.isdead}"></div>
+                            <div ng-if="!player.isdead" class="gamebtn killbtn" ng-click="kill(player)">杀</div>
+                            <div class="gamebtn rescuebtn rescue{{player.rescuedcount}}" ng-click="rescue(player)">救{{player.rescuedcount}}</div>
+                        </span>
+                        <div class="rolebtns" ng-if="player.role=='未知'" style="clear:both;">
+                            <button class="btn btn-default btn-sm" ng-click="player.setrole('杀手')">杀手</button>
+                            <button class="btn btn-default btn-sm" ng-click="player.setrole('警察')">警察</button>
+                            <button class="btn btn-default btn-sm" ng-click="player.setrole('秘密警察')">秘密警察</button>
+                            <button class="btn btn-default btn-sm" ng-click="player.setrole('医生')">医生</button>
+                            <button class="btn btn-default btn-sm" ng-click="player.setrole('平民')">平民</button>
+                            <button class="btn btn-danger btn-sm" ng-click="removeplayer($index)"><span class="glyphicon glyphicon-trash"></span></button>
+                        </div>
+                        <div style="clear:both;"></div>
+                    </li>
+                </ul>
+            </div>
+            <div class="col-md-12">
+
+                <button ng-if="game.isover==0" class="btn btn-default" ng-click="nighttip()">夜晚提示</button>
+            </div>
+            <div ng-if="game.nighttip==1" class="alert-warning nighttip">
+                <p ng-repeat="text in nighttiptext">{{text}}</p>
+                <button ng-click="game.nighttip=0" class="btn btn-default btn-sm" >关闭</button>
+            </div>
+
+            <div class="col-md-12" style="margin-top:0.5em;">
+                <button class="delbtn col-md-12 btn btn-success" ng-click="addplayer()" style="float:left;">添加玩家</button>
+                <button class="btn btn-danger" ng-click="newgame()" style="float:right;">重新开始</button>
+                <div style="clear:both;"></div>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+<script>
+    (function(){
+        'use strict';
+        var killerapp=angular.module("killer",[]);
+        killerapp.controller("killergame",function($scope){
+            $scope.roels=["警察","杀手","秘密警察","医生","平民","花蝴蝶","狙击手"];
+            $scope.haskite=false;
+            $scope.sniper=false;
+            $scope.gamebegin=false;
+            $scope.players=[];
+            $scope.alivecount=0;//存活总人数
+            $scope.goodmancount=0;//好人阵营人数
+            $scope.badmancount=0;//坏人阵营人数
+            $scope.peplecount=0;//平民阵营人数
+            $scope.winner="";
+            $scope.nighttiptext=[];
+            function getPlayerByRole(role){
+                var ps=[];
+                for(var i=0;i<$scope.players.length;i++){
+                    if($scope.players[i].role==role){
+                        ps.push( $scope.players[i]);
+                    }
+                }
+                return ps;
+            }
+            $scope.nighttip=function(){
+                var text=[];
+                text.push(">>天黑请闭眼");
+                text.push(">>杀手睁眼>>杀手杀人>>杀手闭眼");
+                var p0=getPlayerByRole("未知");
+                if(p0.length>0){//有角色没有设置完成，表示为第一天
+                    text.push(">>警察睁眼>>警察指认>>警察看手势>>警察闭眼");
+                    text.push(">>医生睁眼>>医生救人>>医生闭眼");
+                    text.push(">>秘密警察睁眼>>秘密警察是否使用权利>>秘密警察闭眼");
+                }else{//超过第一天
+                    var p1=getPlayerByRole("警察");
+                    if(p1.length>0){
+                        for(var i=0;i<p1.length;i++){
+                            if(!p1[i].isdead){
+                                text.push(">>警察睁眼>>警察指认>>警察看手势>>警察闭眼");
+                                break;
+                            }
+                        }
+                    }
+
+                    var p2=getPlayerByRole("医生");
+                    if(p2.length>0){
+                        for(var i=0;i<p2.length;i++){
+                            if(p2[i]!=null&&!p2[i].isdead){
+                                text.push(">>医生睁眼>>医生救人>>医生闭眼");
+                                break;
+                            }
+                        }
+                    }
+
+                    var p3=getPlayerByRole("秘密警察");
+                    if(p3.length>0){
+                        for(var i=0;i<p3.length;i++){
+                            if(p3[i]!=null&&!p3[i].isdead&&$scope.game.policechance==1){
+                                text.push(">>秘密警察睁眼>>秘密警察是否使用权利>>秘密警察闭眼");
+                                break;
+                            }
+                        }
+                    }
+                }
+                text.push(">>天亮了");
+                $scope.nighttiptext=text;
+                $scope.game.nighttip=1;
+            };
+            $scope.game={
+                isover:0
+            };
+            $scope.game.policechance=1;
+            $scope.newgame=function newgame(){
+                $scope.game.isover=0;
+                var n=$scope.players.length;
+                if(n==0){
+                    n=8
+                }else{
+                    $scope.players=new Array();
+                }
+                for(var i=0;i<n;i++){
+                    $scope.players.push(new player(i));
+                }
+                //秘密警察杀人机会
+                $scope.game.policechance=1;
+                getresult();
+            }
+            $scope.newgame();
+            //添加玩家
+            $scope.addplayer=function(){
+                $scope.players.push(new player());
+                getresult();
+            }
+            //减少玩家
+            $scope.removeplayer=function(number){
+                $scope.players.splice(number,1);
+                getresult();
+            }
+            //杀人
+            $scope.kill=function(player){
+                player.isdead=true;
+                getresult();
+            }
+            //救人
+            $scope.rescue=function(player){
+                if(!player.isdead){
+                    player.rescuedcount++;
+                    if(player.rescuedcount>1){
+                        player.isdead=true;
+                    }
+//                    if(player.rescuedcount>2){//如果误点，两次之后可以救活
+//                        player.rescuedcount=0;
+//                        player.isdead=false;
+//                    }
+                }else{
+                    if(player.rescuedcount==2){
+                        player.rescuedcount=0;
+                    }
+                    player.isdead=false;
+                }
+                getresult();
+            }
+
+            function getresult(){
+                $scope.alivecount=0;
+                $scope.goodmancount=0;
+                $scope.badmancount=0;
+                $scope.peplecount=0;
+                for(var i=0;i<$scope.players.length;i++){
+                    var p=$scope.players[i];
+                    if(!p.isdead){
+                        $scope.alivecount++;
+                        if(p.role=="警察"||p.role=="秘密警察"||p.role=="医生"||p.role=="狙击手"||p.role=="花蝴蝶"){
+                            $scope.goodmancount++;
+                        }
+                        if(p.role=="杀手"){
+                            $scope.badmancount++;
+                        }
+                        if(p.role=="平民"){
+                            $scope.peplecount++;
+                        }
+                    }
+                }
+                if(getPlayerByRole("未知").length>0){//如果身份没有标注完全，游戏不结束
+                    $scope.game.isover=0;
+                }else{
+                    if($scope.alivecount==$scope.players.length)return;
+                    if($scope.goodmancount<1||$scope.peplecount<1){
+                        console.log("game over,killer win");
+                        $scope.game.isover=1;
+                        $scope.winner="杀手";
+                    }else if($scope.badmancount<1){
+                        console.log("game over,police win");
+                        $scope.game.isover=1;
+                        $scope.winner="警察及平民";
+                    }else{
+                        console.log("game continue");
+                        $scope.game.isover=0;
+                    }
+                }
+
+            };
+            function player(number){
+                var _this=this;
+                this.role="未知";
+                this.number=number!=null?number:$scope.players.length;
+                this.isdead=false;//是否被杀
+                this.rescuedcount=0;//被救次数
+                this.setrole=function(role){
+                    _this.role=role;
+                    if(role=="花蝴蝶") {
+                        $scope.haskite = true;
+                    }if(role=="狙击手"){
+                        $scope.hassniper=true;
+                    }
+                    getresult();
+                }
+            }
+
+        });
+    })()
+
+</script>
+</html>

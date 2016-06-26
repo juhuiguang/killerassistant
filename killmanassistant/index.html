@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>Who are the killer</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css" />
+    <script src="js/angularjs/angular.min.js"></script>
+    <style>
+
+    </style>
+</head>
+<body ng-app="killer">
+    <div class="container grid" ng-controller="killergame">
+        <h3>天黑请闭眼游戏助手</h3>
+        <div ng-if="!gamebegin" class="row">
+            <div class="col-md-10">
+                <input type="number" style="width:100%;" id="playercount" placeholder="请输入参与游戏的人数" ng-model="playercount" />
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-default" ng-click="begingame(playercount)">开始游戏</button>
+            </div>
+        </div>
+        <div ng-if="gamebegin">
+            <div id="roleset" class="row">
+                <h3>设置玩家角色</h3>
+                <ul class="col-md-6">
+                    <li  ng-repeat="player in gc.players">
+                        玩家{{player.number}}---》{{player.role}}
+                        <span class="rolebtns" ng-if="player.role=='平民'" style="margin-left:1em;">
+                            <button class="btn btn-default" ng-click="gc.setkiller(player.number)">杀手</button>
+                            <button class="btn btn-default" ng-click="gc.setpolice(player.number)">警察</button>
+                            <button class="btn btn-default" ng-click="gc.setspecialpolice(player.number)">秘密警察</button>
+                            <button class="btn btn-default" ng-click="gc.setdoctor(player.number)">医生</button>
+                        </span>
+                    </li>
+                </ul>
+            </div>
+            <div class="row" ng-repeat="day in gc.days">
+                <h3>第{{day.daycount}}天</h3>
+                <h4>杀手杀人：</h4>
+                <ul class="playlist">
+                    <li ng-if="day.nightkilled==0" ng-repeat="player in gc.players" ng-click="day.nightkilled=player.number" >玩家{{player.number}}</li>
+                    <li ng-if="day.nightkilled>0">
+                        玩家{{day.nightkilled}}
+                    </li>
+                </ul>
+                <h4>警察验证</h4>
+                <ul class="playlist">
+                    <li ng-if="day.findkiller==0" ng-repeat="player in gc.players" ng-click="day.findkiller=player.number" >玩家{{player.number}}</li>
+                    <li ng-if="day.findkiller>0">
+                        验证 玩家{{day.findkiller}},玩家{{day.findkiller}}是{{day.nightfind()}}
+                    </li>
+                </ul>
+                <h4>医生救人</h4>
+                <ul>
+                    <li ng-if="day.rescue==0" ng-repeat="player in gc.players" ng-click="day.rescue=player.number" >玩家{{player.number}}</li>
+                    <li ng-if="day.rescue>0">
+                        医生救 玩家{{day.rescue}}
+                    </li>
+                </ul>
+                <h4>秘密警察环节</h4>
+                <ul>
+                    <li ng-if="day.policekilled==0" ng-repeat="player in gc.players" ng-click="day.policekilled=player.number" >玩家{{player.number}}</li>
+                    <li ng-if="day.policekilled>0">
+                        秘密警察杀 玩家{{day.policekilled}}
+                    </li>
+                </ul>
+                <div>
+                    <p>
+                        {{day.nightresult}}
+                    </p>
+                </div>
+                <button class="btn btn-default" ng-click="day.night()">天亮了</button>
+                <h4>天亮了</h4>
+                <ul>
+                    <li ng-if="day.identify==0" ng-repeat="player in gc.players" ng-click="day.identify=player.number" >玩家{{player.number}}</li>
+                    <li ng-if="day.identify>0">
+                        投票指认 玩家{{day.identify}}
+                    </li>
+                </ul>
+                <div class="resultshow">{{day.result}}</div>
+                <button class="btn btn-default" ng-click="day.log()">结束这一天</button>
+                <button class="btn btn-default" ng-click="gc.newday()">开始新一天</button>
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+    (function(){
+        'use strict';
+        var killerapp=angular.module("killer",[]);
+        killerapp.controller("killergame",function($scope){
+            $scope.roels=["警察","杀手","秘密警察","医生","平民"];
+            $scope.playercount=0;
+            $scope.gamebegin=false;
+            $scope.begingame=function(count){
+                $scope.gamebegin=true;
+                $scope.gc=new gamecontroller();
+                $scope.gc.initgame(count);
+            }
+
+            function player(number){
+                var _this=this;
+                this.role="平民";
+                this.number=number?number:$scope.players.length+1;
+                this.iskilled=false;//是否被杀
+                this.killedtype="杀手";//被杀方式
+                this.identified=false;//是否被指认
+                this.rescuedcount=0;//被救次数
+                this.policeright=1;
+                //杀手杀人函数
+                this.killman=function(p){
+                    p.iskilled=true;
+                }
+                //医生救人函数
+                this.rescueman=function(p){
+                    console.log("rescueman",p);
+                    if(p.iskilled){
+                        p.iskilled=false;
+                    }else{
+                        p.rescuedcount=p.rescuedcount+1;
+                        if(p.rescuedcount>1){
+                            p.killedtype="中毒";
+                            p.iskilled=true;
+                        }
+                    }
+                }
+                //秘密警察杀人函数
+                this.policeKill=function(p){
+                    if(_this.policeright<1){
+                        return;
+                    }
+                    _this.policeright-=1;
+                    if(p.role=="杀手"&&!p.iskilled){
+                        p.killedtype="秘密警察";
+                        p.iskilled=true;
+                    }
+                }
+                this.beidentified=function(){
+                    _this.killedtype="指认";
+                    _this.iskilled=true;
+                }
+            }
+            function gamecontroller(){
+                var gc=this;
+                this.killedplayers=[];
+                this.aliveplayers=[];
+                this.players=[];
+
+                //初始化游戏，创建人物
+                this.initgame=function(playercount){
+                    for(var i=0;i<playercount;i++){
+                        var p=new player(i+1);
+                        gc.players.push(p);
+                    }
+                    gc.aliveplayers=gc.players;
+                }
+
+                //获取生存的角色
+                this.getAlive=function(){
+                    for(var i=0;i<gc.players.length;i++){
+                        if(gc.players[i].iskilled){
+                            continue;
+                        }else{
+                            gc.aliveplayers.push(gc.players[i]);
+                        }
+                    }
+                    return gc.aliveplayers;
+                }
+                //获取被杀角色
+                this.getKilled=function(){
+                    for(var i=0;i<gc.players.length;i++){
+                        if(gc.players[i].iskilled){
+                            gc.killedplayers.push(gc.players[i]);
+                        }else{
+                            continue;
+                        }
+                    }
+                    return gc.killedplayers;
+                }
+                this.getPlayer=function(number){
+                    for(var i=0;i<gc.players.length;i++){
+                        if(gc.players[i].number==number){
+                            return gc.players[i];
+                        }
+                    }
+                }
+
+                this.getPlayerByRole=function(role){
+                    for(var i=0;i<gc.players.length;i++){
+                        if(gc.players[i].role==role){
+                            return gc.players[i];
+                        }
+                    }
+                }
+
+                this.setkiller=function(number){
+                    setrole(number,"杀手");
+                }
+                this.setpolice=function(number){
+                    setrole(number,"警察");
+                }
+                this.setspecialpolice=function(number){
+                    setrole(number,"秘密警察");
+                }
+                this.setdoctor=function(number){
+                    setrole(number,"医生");
+                }
+                function setrole(number,role){
+                    gc.getPlayer(number).role=role;
+                }
+
+                this.days=[new gameDay(1)];
+
+                this.newday=function(){
+                    gc.days.push(new gameDay(gc.days.length+1));
+                }
+
+
+                //游戏天
+                function gameDay(count){
+                    var gameday=this;
+                    this.daycount=count;
+                    this.daykilled=0;//投票杀人
+                    this.nightkilled=0;//杀手杀人
+                    this.policekilled=0;//秘密警察杀人
+                    this.rescue=0;//医生救人
+                    this.findkiller=0;
+                    this.identify=0;
+                    this.nightresult="";
+                    this.result="";
+                    this.nightfind=function(){
+                        return gc.getPlayer(gameday.findkiller).role;
+                    }
+                    this.night=function(){
+                        //处理夜晚杀手杀人
+                        gc.getPlayerByRole("杀手").killman(gc.getPlayer(gameday.nightkilled));
+                        //处理医生救人
+                        gc.getPlayerByRole("医生").rescueman(gc.getPlayer(gameday.rescue));
+                        //处理秘密警察杀人
+                        if(gameday.policekilled>0){
+                            gc.getPlayerByRole("秘密警察").policeKill(gc.getPlayer(gameday.policekilled));
+                        }
+                        var result="";
+                        if(gc.getPlayer(gameday.nightkilled).iskilled){
+                            result+="玩家"+gameday.nightkilled+" 被杀。";
+                        }
+                        if(gameday.rescue!=gameday.nightkilled){
+                            if(gc.getPlayer(gameday.rescue).iskilled){
+                                result+="玩家"+gameday.rescue+" 被杀。";
+                            }
+                        }
+                        if(gc.getPlayer(gameday.policekilled).iskilled){
+                            result+="玩家"+gameday.policekilled+" 被杀。";
+                        }
+                        if(result==""){
+                            result="没有玩家被杀。";
+                        }
+                        this.nightresult=result
+                        return result;
+                    }
+
+                    this.day=function(){
+                        //处理被指认投票致死的人
+                        gc.getPlayer(gameday.identify).beidentified();
+                    }
+
+                    this.log=function(){
+                        var result="第 "+gameday.daycount+" 天，夜晚：" +
+                                "杀手杀 玩家"+gameday.nightkilled+"，玩家"+gameday.nightkilled+((gc.getPlayer(gameday.nightkilled).iskilled)?" 死亡":" 未死亡")+"。" +
+                                ((gameday.rescue>0)?("医生救 玩家"+gameday.rescue+"，玩家"+gameday.rescue+((gc.getPlayer(gameday.rescue).iskilled)?" 死亡":" 未死亡")):"医生未救人" )+"。"+
+                                ((gameday.policekilled>0)?("秘密警察 杀 玩家"+gameday.policekilled+"，玩家"+gameday.policekilled+((gc.getPlayer(gameday.policekilled).iskilled)?" 死亡":" 未死亡")):"秘密警察未杀人") +"。"+
+                                "警察指认 玩家"+gameday.findkiller+" 为杀手，指认" +((gc.getPlayer(gameday.findkiller).role=="杀手")?"正确":"错误")+"。"+
+                                "白天：玩家"+gameday.identify+" 被投死";
+                        this.result=result;
+                        return result;
+                    }
+
+                }
+
+
+            }
+
+        });
+    })()
+
+</script>
+</html>
