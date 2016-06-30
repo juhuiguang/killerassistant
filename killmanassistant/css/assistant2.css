@@ -1,0 +1,80 @@
+body{
+    width:100%;
+    height:100%;
+}
+#resultdiv{
+
+}
+.playerlist{
+    width:100%;
+    padding:0;
+    margin:0;
+    list-style: none;
+}
+.playerlist .player{
+    width:3em;
+    height:3em;
+    border:1px solid #999999;
+    border-radius: 50%;
+    background:rgba(255,255,255,1);
+    float:left;
+    margin-left:1em;
+    margin-top:1.5em;
+    text-align:center;
+    position:relative;
+}
+.playerlist .player.addplayer{
+    font-size:100%;
+    line-height:3em;
+}
+.playerlist .player.killer{
+    background:#f00;
+    color:#fff;
+}
+.playerlist .player.killer .playername{
+    color:#000;
+}
+.playerlist .player .playerroletext{
+    line-height:3em;
+}
+.playerlist .player.killer .playerroletext{
+    color:#fff;
+}
+.playerlist .player .playername{
+    width:3em;
+    font-weight:bold;
+    text-align:center;
+    position:absolute;
+    top:-50%;
+
+}
+
+.playerlist .player .rolebtns{
+    position:absolute;
+    top:105%;
+    left:-1.5em;
+    background:rgba(0,0,0,0.9);
+    color:#fff;
+    z-index:2000;
+    border-radius:0.2em;
+}
+
+.playerlist .player .rolebtns a{
+    background:transparent;
+    color:#fff;
+    padding:0.5em;
+    width:6em;
+    display:block;
+}
+
+.daycontent.hide{
+    display:none;
+}
+.daycontent.show{
+    display:block;
+}
+.dayplayerlist{
+    margin-left:0.5em;
+    margin-top:0.5em;
+}
+

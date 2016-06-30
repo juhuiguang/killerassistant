@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="format-detection"content="telephone=no" />
+    <title>Who are the killers</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/assistant2.css"/>
+    <script src="js/angularjs/angular.min.js"></script>
+</head>
+<body ng-app="killer">
+    <div class="container" ng-controller="killergame">
+        <div class="row col-md-12">
+            <h3>天黑请闭眼</h3>
+        </div>
+        <div id="resultdiv" class="row col-md-12 alert-info gameinfo">
+            <div class="resultshow col-md-12">
+                <span>当前游戏总人数：{{players.length}}</span>，
+                <span>存活总人数：{{alivecount}}<br/></span>
+                <span>警察阵营存活数：{{goodmancount}}</span>，
+                <span>杀手阵营存活数：{{badmancount}}<br/></span>
+                <span>平民存活数：{{peplecount}}<br/></span>
+                <div ng-if="game.isover" class="result">
+                    <h4>游戏结束，{{winner}}获胜！！</h4>
+                    <button class="btn btn-danger" ng-click="newgame()">重新开始</button>
+                </div>
+            </div>
+        </div>
+        <div class="row col-md-12 content">
+            <div class="col-md-12">
+                <ul class="playerlist">
+                    <li class="player" ng-class="{killed:player.isdead,killer:player.role=='杀手'}"  ng-repeat="player in players">
+                        <div class="pshow" ng-class="{alive:!player.isdead}">
+                            <a ng-click="player.$roleclick()" class="playerroletext">{{player.role[0]}}</a>
+                            <div class="playername" ng-class="{police:player.role=='警察',killer:player.role=='杀手',specialpolice:player.role=='秘密警察',doctor:player.role=='医生',people:player.role=='平民'}">{{player.number+1}}</div>
+                        </div>
+                        <div class="rolebtns" ng-if="player.$rolebtn">
+                            <a ng-repeat="role in roles" ng-click="player.setrole(role)">{{role}}</a>
+
+                            <a  ng-click="removeplayer($index)"><span class="glyphicon glyphicon-trash"></span></a>
+                        </div>
+                    </li>
+                    <li class="player addplayer" ng-click="addplayer()">+</li>
+                </ul>
+            </div>
+        </div>
+        <div class="days-content" class="row col-md-12" style="margin-top:1em;">
+            <ul class="dayslist nav nav-pills">
+               <li class="day" role="presentation" ng-repeat="day in days" ng-class="{active:day.$actived}">
+                   <a href="#day{{$index}}" ng-click="day.activeday()">第{{$index+1}}天</a>
+               </li>
+                <li class="day" role="presentation" ng-click="newday()"><a>+新的一天</a></li>
+            </ul>
+            <div class="daycontent list-group col-md-12 " ng-repeat="day in days"  id="day{{$index}}" ng-if="day.$actived">
+                <div class="roleinday list-group-item">
+                    <div>花蝴蝶保护玩家：<a ng-if="day.protectplayer!=null" ng-click="day.protectplayer=null">玩家{{day.protectplayer.number+1}}</a><span ng-if="day.protectplayer==null">无</span></div>
+                    <button ng-if="day.protectplayer==null&&!day.$passed" class="btn btn-default btn-sm dayplayerlist" ng-click="day.protectplayer=player" ng-repeat="player in players|filter:{isdead:false}">{{player.number+1}}</button>
+                </div>
+
+                <div class="roleinday list-group-item">
+                    <div>杀手杀人：<a ng-if="day.killplayer!=null" ng-click="day.killplayer=null">玩家{{day.killplayer.number+1}}</a><span ng-if="day.killplayer==null">无</span></div>
+                    <button ng-if="day.killplayer==null&&!day.$passed" class="btn btn-default btn-sm dayplayerlist" ng-click="day.killplayer=player" ng-repeat="player in players|filter:{isdead:false}">{{player.number+1}}</button>
+                </div>
+
+                <div class="roleinday list-group-item">
+                    <div>警察指认：</div>
+                    <div>(本局杀手<span ng-repeat="player in players|filter:{role:'杀手'}">【玩家{{player.number+1}}】</span>，请比较警察指认号码进行判断。>)</div>
+                </div>
+
+                <div class="roleinday list-group-item">
+                    <div>秘密警察权利：<a ng-if="day.specialkill!=null" ng-click="day.specialkill=null">玩家{{day.specialkill.number+1}}</a><span ng-if="day.specialkill==null">无</span></div>
+                    <button ng-if="day.specialkill==null&&!day.$passed" class="btn btn-default btn-sm dayplayerlist" ng-click="day.specialkill=player" ng-repeat="player in players|filter:{isdead:false}">{{player.number+1}}</button>
+                </div>
+                <div class="roleinday list-group-item">
+                    <div>狙击手权利：<a ng-if="day.sniperkill!=null" ng-click="day.sniperkill=null">玩家{{day.sniperkill.number+1}}</a><span ng-if="day.sniperkill==null">无</span></div>
+                    <button ng-if="day.sniperkill==null&&!day.$passed" class="btn btn-default btn-sm dayplayerlist" ng-click="day.sniperkill=player" ng-repeat="player in players|filter:{isdead:false}">{{player.number+1}}</button>
+                </div>
+                <div class="roleinday list-group-item">
+                    <div>医生救人：<a ng-if="day.rescueplayer!=null" ng-click="day.rescueplayer=null">玩家{{day.rescueplayer.number+1}}</a><span ng-if="day.rescueplayer==null">无</span></div>
+                    <button ng-if="day.rescueplayer==null&&!day.$passed" class="btn btn-default btn-sm dayplayerlist" ng-click="day.rescueplayer=player" ng-repeat="player in players|filter:{isdead:false}">{{player.number+1}}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+<script src="js/assistant.js"></script>
+</html>
