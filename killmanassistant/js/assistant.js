@@ -148,7 +148,7 @@
             var d=new dayitem();
             $scope.days.push(d);
         }
-
+        $scope.newday();
         //玩家对象
         function player(number){
             var _this=this;
@@ -180,8 +180,9 @@
             this.deniedplayer=null;//被禁言的玩家
             this.voteplayer=null;//投票死的玩家
             this.$passed=false;//这一天有没有过去
-            this.$day=false;
+            this.$day=false;//是否白天
             this.$actived=false;
+            this.nresult="";
             var _this=this;
 
             this.activeday=function(){
@@ -209,7 +210,7 @@
                 //处理花蝴蝶功能
                 if(_this.protectplayer!=null){
                     var kitep=getPlayerByRole("花蝴蝶");
-                    kitep.protectplayer=_this.protectplayer;
+                    kitep[0].protectplayer=_this.protectplayer;
                     _this.protectplayer.beprotect=true;
                 }
                 //处理杀手杀人
@@ -220,6 +221,7 @@
                 }
                 //处理秘密警察杀人
                 if(_this.specialkill!=null){
+                    $scope.game.policechance=false;//秘密警察机会用掉
                     if(_this.specialkill.role=="杀手"){
                         if(!_this.specialkill.beprotect){
                             $scope.kill(_this.specialkill);
@@ -271,8 +273,25 @@
                 if(_this.protectplayer!=null&&_this.protectplayer.isdead){
                     result.push("玩家"+(_this.protectplayer.number+1)+",被保护致死");
                 }
+                _this.$day=true;
+                _this.nresult=result;
                 return result;
             }
+
+
+            this.overday=function(){
+                //投票致死
+                if(_this.voteplayer!=null){
+                    $scope.kill(_this.voteplayer);
+                }
+                if($scope.game.isover<1){
+                    _this.$passed=true;
+                    $scope.newday();
+                }else{
+                    _this.$passed=true;
+                }
+            }
+
 
         }
 

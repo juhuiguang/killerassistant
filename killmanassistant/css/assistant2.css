@@ -23,6 +23,9 @@ body{
     text-align:center;
     position:relative;
 }
+.playerlist .player.killed{
+    background:rgba(30,30,30,0.9);
+}
 .playerlist .player.addplayer{
     font-size:100%;
     line-height:3em;
@@ -48,6 +51,8 @@ body{
     top:-50%;
 
 }
+
+
 
 .playerlist .player .rolebtns{
     position:absolute;

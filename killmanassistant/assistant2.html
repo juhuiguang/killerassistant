@@ -51,7 +51,6 @@
                <li class="day" role="presentation" ng-repeat="day in days" ng-class="{active:day.$actived}">
                    <a href="#day{{$index}}" ng-click="day.activeday()">第{{$index+1}}天</a>
                </li>
-                <li class="day" role="presentation" ng-click="newday()"><a>+新的一天</a></li>
             </ul>
             <div class="daycontent list-group col-md-12 " ng-repeat="day in days"  id="day{{$index}}" ng-if="day.$actived">
                 <div class="roleinday list-group-item">
@@ -81,7 +80,26 @@
                     <div>医生救人：<a ng-if="day.rescueplayer!=null" ng-click="day.rescueplayer=null">玩家{{day.rescueplayer.number+1}}</a><span ng-if="day.rescueplayer==null">无</span></div>
                     <button ng-if="day.rescueplayer==null&&!day.$passed" class="btn btn-default btn-sm dayplayerlist" ng-click="day.rescueplayer=player" ng-repeat="player in players|filter:{isdead:false}">{{player.number+1}}</button>
                 </div>
+                <div class="roleinday list-group-item">
+                    <btn class="btn btn-default" ng-click="day.nightresult()">天亮了</btn>
+                </div>
+                <div class="roleinday list-group-item dayresult" ng-if="day.$day">
+                    <ul>
+                        <li ng-repeat="re in day.nresult">
+                            {{re}}
+                        </li>
+                    </ul>
+
+                </div>
+                <div class="roleinday list-group-item"  ng-if="day.$day">
+                    <div>投票指认杀手：<a ng-if="day.voteplayer!=null" ng-click="day.voteplayer=null">玩家{{day.voteplayer.number+1}}</a><span ng-if="day.voteplayer==null">无</span></div>
+                    <button ng-if="day.voteplayer==null&&!day.$passed" class="btn btn-default btn-sm dayplayerlist" ng-click="day.voteplayer=player" ng-repeat="player in players|filter:{isdead:false}">{{player.number+1}}</button>
+                </div>
+                <div class="roleinday list-group-item"  ng-if="day.$day">
+                    <btn class="btn btn-primary" ng-click="day.overday()">结束这一天，开始新一天</btn>
+                </div>
             </div>
+
         </div>
     </div>
 
