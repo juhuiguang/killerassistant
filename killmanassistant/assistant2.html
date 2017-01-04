@@ -80,7 +80,7 @@
                     <div>医生救人：<a ng-if="day.rescueplayer!=null" ng-click="day.rescueplayer=null">玩家{{day.rescueplayer.number+1}}</a><span ng-if="day.rescueplayer==null">无</span></div>
                     <button ng-if="day.rescueplayer==null&&!day.$passed" class="btn btn-default btn-sm dayplayerlist" ng-click="day.rescueplayer=player" ng-repeat="player in players|filter:{isdead:false}">{{player.number+1}}</button>
                 </div>
-                <div class="roleinday list-group-item">
+                <div class="roleinday list-group-item" ng-if="!day.$day">
                     <btn class="btn btn-default" ng-click="day.nightresult()">天亮了</btn>
                 </div>
                 <div class="roleinday list-group-item dayresult" ng-if="day.$day">
@@ -95,7 +95,7 @@
                     <div>投票指认杀手：<a ng-if="day.voteplayer!=null" ng-click="day.voteplayer=null">玩家{{day.voteplayer.number+1}}</a><span ng-if="day.voteplayer==null">无</span></div>
                     <button ng-if="day.voteplayer==null&&!day.$passed" class="btn btn-default btn-sm dayplayerlist" ng-click="day.voteplayer=player" ng-repeat="player in players|filter:{isdead:false}">{{player.number+1}}</button>
                 </div>
-                <div class="roleinday list-group-item"  ng-if="day.$day">
+                <div class="roleinday list-group-item"  ng-if="day.$day&&!day.$passed">
                     <btn class="btn btn-primary" ng-click="day.overday()">结束这一天，开始新一天</btn>
                 </div>
             </div>

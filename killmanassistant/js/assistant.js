@@ -160,6 +160,9 @@
             this.protectplayer=null;//花蝴蝶保护对象，默认为空
             this.$rolebtn=false;//是否显示角色选择
             this.$roleclick=function(){//点击角色选择时，控制角色选择面板显示
+                for(var i=0;i<$scope.players.length;i++){
+                    $scope.players[i].$rolebtn=false;
+                }
                 _this.$rolebtn=true;
             }
             this.setrole=function(role){//选择角色后，给角色赋值
@@ -273,6 +276,9 @@
                 if(_this.protectplayer!=null&&_this.protectplayer.isdead){
                     result.push("玩家"+(_this.protectplayer.number+1)+",被保护致死");
                 }
+                if(result.length==0){
+                    result.push("今晚平安夜，没有人被杀。");
+                }
                 _this.$day=true;
                 _this.nresult=result;
                 return result;
@@ -283,6 +289,9 @@
                 //投票致死
                 if(_this.voteplayer!=null){
                     $scope.kill(_this.voteplayer);
+                }
+                if(_this.protectplayer!=null){
+                    _this.protectplayer.beprotect=false;
                 }
                 if($scope.game.isover<1){
                     _this.$passed=true;
